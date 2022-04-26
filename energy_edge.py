@@ -83,26 +83,6 @@ class Optimizer(object):
             return 1000000.0
 
 
-    def boundpatch(self,i,j,img):
-        p = cfg.PATCH_SIZE // 2
-        h, w = self.image.shape[0], self.image.shape[1]
-
-        if i in range(p, h - p) and j in range(p, w - p):
-            return img[i -p:i + p,j - p:j + p]
-        elif j+p >w and j-p < w and i+p >h and i-p<h:
-            return img[h -2*p:, w - 2 * p:]
-        elif j+p >w and j-p<w and i-p <0 and i+p>0:
-            return img[:2*p, w - 2 * p:]
-        elif i+p >h and i-p<h and j-p <0 and j+p > 0 :
-            return img[h -2*p:, :2*p]
-        elif i + p > h and i - p < h and j-p > 0 and j+p<w:
-            return img[h - 2 * p:, j - p:j + p]
-        elif j+p > w and j-p < w and i-p >0 and i+p<h:
-            return img[i -p:i + p, w - 2*p:]
-        elif j-p < 0 and j+p > 0 and i-p >0 and i+p<h:
-            return img[i -p:i + p, :2*p]
-        elif i-p < 0 and i+p > 0 and j-p >0 and j+p<h:
-            return img[:2* p, j - p:j + p]
 
     def V(self, site1, site2, alpha, beta):
         x1a, y1a = site1[0] + alpha[0], site1[1] + alpha[1]
@@ -129,29 +109,7 @@ class Optimizer(object):
 
 
                 return np.sum((p0-p1)**2)+np.sum((p2-p3)**2)
-                # 重叠部分差值
-                # min(x1a-p,x1b-p),max(x1a+p,x1b+p)
-                # if x1a == x1b and y1a - y1b == p:
-                #     l1 = np.sum((p1[:, p:] - p0[:, :p]) ** 2)
-                #     print(l1)
-                # if x1a == x1b and y1b - y1a == p:
-                #     l1 = np.sum((p0[:, p:] - p1[:, :p]) ** 2)
-                # if y1a == y1b and x1a - x1b == p:
-                #     l1 = np.sum((p1[p:, :] - p0[:p, :]) ** 2)
-                # if y1a == y1b and x1b - x1a == p:
-                #     l1 = np.sum((p0[p:, :] - p1[:p, :]) ** 2)
-                #
-                # if x2a == x2b and y2a - y2b == p:
-                #     l2 = np.sum((p3[:, p:] - p2[:, :p]) ** 2)
-                # if x2a == x2b and y2b - y2a == p:
-                #     l2 = np.sum((p2[:, p:] - p3[:, :p]) ** 2)
-                # if y2a == y2b and x2a - x2b == p:
-                #     l2 = np.sum((p3[p:, :] - p2[:p, :]) ** 2)
-                # if y2a == y2b and x2b - x2a == p:
-                #     l2 = np.sum((p2[p:, :] - p3[:p, :]) ** 2)
-                #
-                # return l1 + l2
-
+                
             return 1000000.0
         except:
             return 1000000.0
@@ -180,18 +138,7 @@ class Optimizer(object):
                 p2 = self.image[x2a - p:x2a + p, y2a - p:y2a + p]
                 p3 = self.image[x2b - p:x2b + p, y2b - p:y2b + p]
 
-                # if site1[0] == site2[0] and site1[1] - site2[1] == p:
-                #     return np.sum((p0[:, :p] - p1[:, :p]) ** 2 + np.sum(p3[:, p:] - p2[:, p:]) ** 2)
-                # if site1[0] == site2[0] and site2[1] - site1[1] == p:
-                #     return np.sum((p1[:, p:] - p0[:, p:]) ** 2 + np.sum(p2[:, :p] - p3[:, :p]) ** 2)
-                # if site1[1] == site2[1] and site1[0] - site2[0] == p:
-                #     return np.sum((p0[:p, :] - p1[:p, :]) ** 2 + np.sum(p3[p:, :] - p2[p:, :]) ** 2)
-                # if site1[1] == site2[1] and site2[0] - site1[0] == p:
-                #     return np.sum((p1[p:, :] - p0[p:, :]) ** 2 + np.sum(p2[:p, :] - p3[:p, :]) ** 2)
-                # p0 = self.boundpatch(x1a,y1a,self.image)
-                # p1 = self.boundpatch(x1b,y1b,self.image)
-                # p2 = self.boundpatch(x2a,y2a,self.image)
-                # p3 = self.boundpatch(x2b,y2b,self.image)
+            
                 if site1[0] == site2[0] and site1[1] - site2[1] == p:
                     return np.sum((p0[:, :p+ml] - p3[:, p-ml:]) ** 2) + np.sum((p2[:, p-ml:] - p1[:, :p+ml]) ** 2)
                     # return np.mean(np.square(p0[:, :p] - p3[:, p:])) + np.mean(np.square(p2[:, p:] - p1[:, :p]))
