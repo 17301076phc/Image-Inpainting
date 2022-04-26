@@ -1,5 +1,4 @@
 # Image Completion using Statistics of Patch Offsets
-# Author: Pranshu Gupta and Shrija Mishra
 
 import cv2, numpy as np, sys, math, operator, maxflow, random, config as cfg
 from scipy import ndimage
