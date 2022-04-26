@@ -163,23 +163,6 @@ def CompleteImage(image, sites, mask, offsets, optimalLabels):
         j = optimalLabels[i]
         m,n = sites[i][0] + offsets[j][0],sites[i][1] + offsets[j][1]
         # print(sites[i][0] + offsets[j][0],sites[i][1] + offsets[j][1])
-        # if m in range(p,h-p) and n in range(p,w-p):
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m -p:m + p,n - p:n + p]
-        # elif n+p >w and n -p<w and m+p >h  and m-p<h:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[h-2*p:, w-2*p:]
-        # elif n+p >w and n -p<w and m - p < 0 and m+p>0:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[:2*p, w - p * 2:]
-        # elif m+p >h and m-p<h and n - p < 0 and n+p>0:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[h-2*p:, :2*p]
-        # elif n + p > w and n -p<w and m-p>0 and m+p <h:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m - p:m + p, w-p*2:]
-        # elif m + p > h and m-p<h and n-p >0 and n+p <w:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p]= image[h-p*2:, n - p:n + p]
-        # elif m-p<0 and m+p>0 and n-p >0 and n+p <w:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[:2*p, n - p:n + p]
-        # elif n-p<0 and n+p>0 and m-p >0 and m+p <h:
-        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m-p:m+p, :2*p]
-
         finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m - p:m + p, n - p:n + p]
 
         completedPoints[sites[i][0], sites[i][1]] = finalImg[sites[i][0], sites[i][1]]
