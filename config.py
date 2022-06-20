@@ -4,9 +4,10 @@
 SRC_FOLDER = "images/source/"
 OUT_FOLDER = "images/output/"
 BB_IMAGE_SUFFIX = "_BB.png"
-PATCH_SIZE = 30
-KDT_LEAF_SIZE = 8
+PATCH_SIZE = 16
+KDT_LEAF_SIZE = 10
 PCA_COMPONENTS = 24
+K = 90
 MAX_ITER = 20
 
 ## Intermediate Outputs
