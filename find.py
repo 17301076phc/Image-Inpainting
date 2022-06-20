@@ -55,8 +55,8 @@ def GetSearchDomain(shape, bbox):
     col_min, col_max = max(0, 2 * bbox[0] - bbox[1]), min(2 * bbox[1] - bbox[0], shape[1] - 1)
     row_min, row_max = max(0, 2 * bbox[2] - bbox[3]), min(2 * bbox[3] - bbox[2], shape[0] - 1)
 
-    # col_min, col_max = 0, shape[1]-p
-    # row_min, row_max = 0, shape[0]-p
+    # col_min, col_max = p, shape[1]-p
+    # row_min, row_max = p, shape[0]-p
     end = time()
     print("GetSearchDomain execution time: ", end - start)
     return col_min, col_max, row_min, row_max
@@ -68,8 +68,10 @@ def GetPatches(image,bbox, hole):
     """
     start = time()
     print(bbox)
-    indices, patches = [],[]
+    indices, patches,edgepatches = [],[],[]
     rows, cols, _ = image.shape
+    edge = cv2.imread("./gdata/test_set/edge/edge_rgb.jpg")
+
     # for i in range(bbox[0] + cfg.PATCH_SIZE // 2, bbox[1] - cfg.PATCH_SIZE // 2):
     #     for j in range(bbox[2] + cfg.PATCH_SIZE // 2, bbox[3] - cfg.PATCH_SIZE // 2):
     #         if j not in range(hole[2] - cfg.PATCH_SIZE // 2, hole[3] + cfg.PATCH_SIZE // 2) and i not in range(
@@ -78,7 +80,7 @@ def GetPatches(image,bbox, hole):
     #             patches.append(image[i - cfg.PATCH_SIZE // 2:i + cfg.PATCH_SIZE // 2,
     #                            j - cfg.PATCH_SIZE // 2:j + cfg.PATCH_SIZE // 2].flatten())
     # end = time()
-    p = 8
+    p = 16
     for i in range(bbox[2] + p // 2, bbox[3] - p // 2):
         for j in range(bbox[0] + p // 2, bbox[1] - p // 2):
             if i not in range(hole[2] - p // 2, hole[3] + p // 2) and j not in range(
@@ -86,12 +88,14 @@ def GetPatches(image,bbox, hole):
                 indices.append([i, j])
                 patches.append(image[i - p // 2:i + p // 2,
                                j - p // 2:j + p // 2].flatten())
+                edgepatches.append(edge[i - p // 2:i + p // 2,
+                               j - p // 2:j + p // 2].flatten())
     end = time()
     print("GetPatches execution time: ", end - start)
     # plot.figure()
     # plot.imshow(patches)
     # plot.show()
-    return np.array(indices), np.array(patches, dtype='int64')
+    return np.array(indices), np.array(patches, dtype='int64'),np.array(edgepatches, dtype='int64')
 
 
 def ReduceDimension(patches):  # 通过主成分分析进行降维
@@ -108,6 +112,7 @@ def GetOffsets(patches, indices):
     kd = kdtree.KDTree(patches, leafsize=cfg.KDT_LEAF_SIZE, tau=cfg.TAU)  # 快速邻近查找
     print(kd)
     dist, offsets = kdtree.get_annf_offsets(patches, indices, kd.tree, cfg.TAU)
+    # dist, offsets = kdtree.get_annf_offsets( indices, kd.tree, cfg.TAU)
     end = time()
     print("GetOffsets execution time: ", end - start)
     return offsets
@@ -155,17 +160,38 @@ def GetOptimizedLabels(imageR, mask, labels):
 
 def CompleteImage(image, sites, mask, offsets, optimalLabels):
     # failedPoints = False
+    edgemap = cv2.imread("./gdata/test_set/edge/edge1024.png",cv2.IMREAD_GRAYSCALE)
     h,w = image.shape[0],image.shape[1]
     completedPoints = np.zeros(image.shape)
+    completededge = np.zeros([h,w], dtype="uint8")
+
     finalImg = image
-    p = cfg.PATCH_SIZE // 2
+    p = 2
     for i in range(len(sites)):
         j = optimalLabels[i]
         m,n = sites[i][0] + offsets[j][0],sites[i][1] + offsets[j][1]
         # print(sites[i][0] + offsets[j][0],sites[i][1] + offsets[j][1])
-        finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m - p:m + p, n - p:n + p]
+        # if m in range(p,h-p) and n in range(p,w-p):
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m -p:m + p,n - p:n + p]
+        # elif n+p >w and n -p<w and m+p >h  and m-p<h:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[h-2*p:, w-2*p:]
+        # elif n+p >w and n -p<w and m - p < 0 and m+p>0:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[:2*p, w - p * 2:]
+        # elif m+p >h and m-p<h and n - p < 0 and n+p>0:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[h-2*p:, :2*p]
+        # elif n + p > w and n -p<w and m-p>0 and m+p <h:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m - p:m + p, w-p*2:]
+        # elif m + p > h and m-p<h and n-p >0 and n+p <w:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p]= image[h-p*2:, n - p:n + p]
+        # elif m-p<0 and m+p>0 and n-p >0 and n+p <w:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[:2*p, n - p:n + p]
+        # elif n-p<0 and n+p>0 and m-p >0 and m+p <h:
+        #     finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m-p:m+p, :2*p]
 
+        finalImg[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p] = image[m - p:m + p, n - p:n + p]
+        completededge[sites[i][0] - p:sites[i][0] + p, sites[i][1] - p:sites[i][1] + p]= edgemap[m - p:m + p, n - p:n + p]
         completedPoints[sites[i][0], sites[i][1]] = finalImg[sites[i][0], sites[i][1]]
+    cv2.imwrite(cfg.OUT_FOLDER + cfg.IMAGE + "edgepoints.jpg", completededge)
     return finalImg, completedPoints
 
 def main(image, imageR, mask):
@@ -187,16 +213,17 @@ def main(image, imageR, mask):
     bbwidth = bb[3] - bb[2]
     bbheight = bb[1] - bb[0]
     cfg.TAU = max(bbwidth, bbheight) / 15
-    # cfg.TAU = 32
+    # cfg.TAU = 24
     cfg.DEFLAT_FACTOR = image.shape[1]
     sd = GetSearchDomain(image.shape, bb)
     print(sd)
-    indices, patches = GetPatches(imageR, sd, bb)  # 在已知区域中寻找patch
+    indices, patches,edgepatches = GetPatches(imageR, sd, bb)  # 在已知区域中寻找patch
     # print(indices.shape)
     print(patches.shape)
     reducedPatches = ReduceDimension(patches)
-    offsets = GetOffsets(reducedPatches, indices)
-    offsets = GetKDominantOffsets(offsets,60)
+    # re_edgepatches = ReduceDimension(edgepatches)
+    offsets = GetOffsets(reducedPatches,indices)
+    offsets = GetKDominantOffsets(offsets,cfg.K)
     # offsets = findEdgeOffsets(offsets)
     print(len(offsets))
 
